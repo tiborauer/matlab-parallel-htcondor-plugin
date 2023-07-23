@@ -6,6 +6,11 @@ function state = getJobStateFcn(cluster, job, state)
 
 % Copyright 2010-2022 The MathWorks, Inc.
 
+TimeOut = 5; % default s to wait for the conda_q and conda_history
+if isprop(cluster.AdditionalProperties, 'TimeOut')
+    TimeOut = cluster.AdditionalProperties.TimeOut;
+end
+
 % Store the current filename for the errors, warnings and
 % dctSchedulerMessages
 currFilename = mfilename;
@@ -46,7 +51,7 @@ end
 
 % Get the top level job state from condor_q
 jobList = sprintf('''%s'' ', schedulerIDs{:});
-commandToRun = sprintf('condor_q -long -attributes JobStatus %s ; condor_history -long -attributes JobStatus %s', jobList, jobList);
+commandToRun = sprintf('timeout %ds condor_q -long -attributes JobStatus %s ; timeout %ds condor_history -long -attributes JobStatus %s', TimeOut,jobList, TimeOut,jobList);
 dctSchedulerMessage(4, '%s: Querying cluster for job state using command:\n\t%s', currFilename, commandToRun);
 
 try
